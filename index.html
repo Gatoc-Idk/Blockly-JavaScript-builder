@@ -110,22 +110,13 @@
       <block type="text_print"></block>
       <block type="text_prompt"></block>
     </category>
-    <category name="Lists" colour="%{BKY_LISTS_HUE}">
-      <block type="lists_create_empty"></block>
-      <block type="lists_create_with"></block>
-      <block type="lists_repeat"></block>
-      <block type="lists_length"></block>
-      <block type="lists_isEmpty"></block>
-      <block type="lists_indexOf"></block>
-      <block type="lists_getIndex"></block>
-      <block type="lists_setIndex"></block>
-      <block type="lists_getSublist"></block>
-    </category>
     <category name="Variables" custom="VARIABLE" colour="%{BKY_VARIABLES_HUE}">
       <block type="variables_get"></block>
       <block type="variables_set"></block>
     </category>
-    <category name="Functions" custom="PROCEDURE" colour="%{BKY_PROCEDURES_HUE}">
+    <category name="Functions" colour="%{BKY_PROCEDURES_HUE}">
+      <block type="procedures_defnoreturn"></block>
+      <block type="procedures_callnoreturn"></block>
     </category>
   </xml>
 
@@ -159,7 +150,7 @@
         .catch(err => alert("Failed to copy code: " + err));
     }
 
-    // Define custom block
+    // Define custom blocks
     Blockly.defineBlocksWithJsonArray([
       {
         "type": "text_prompt",
