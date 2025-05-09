@@ -93,6 +93,8 @@
       <block type="logic_compare"></block>
       <block type="logic_operation"></block>
       <block type="logic_boolean"></block>
+      <block type="logic_negate"></block>
+      <block type="logic_null"></block>
     </category>
     <category name="Loops" colour="%{BKY_LOOPS_HUE}">
       <block type="controls_repeat_ext"></block>
@@ -104,11 +106,30 @@
       </block>
       <block type="math_arithmetic"></block>
       <block type="math_round"></block>
+      <block type="math_single"></block>
+      <block type="math_modulo"></block>
+      <block type="math_random_int"></block>
+    </category>
+    <category name="Lists" colour="%{BKY_LISTS_HUE}">
+      <block type="lists_create_empty"></block>
+      <block type="lists_create_with"></block>
+      <block type="lists_repeat"></block>
+      <block type="lists_length"></block>
+      <block type="lists_isEmpty"></block>
+      <block type="lists_indexOf"></block>
+      <block type="lists_getIndex"></block>
+      <block type="lists_setIndex"></block>
+      <block type="lists_getSublist"></block>
+      <block type="lists_split"></block>
+      <block type="lists_sort"></block>
     </category>
     <category name="Text" colour="%{BKY_TEXTS_HUE}">
       <block type="text"></block>
       <block type="text_print"></block>
       <block type="text_prompt"></block>
+      <block type="text_length"></block>
+      <block type="text_isEmpty"></block>
+      <block type="text_join"></block>
     </category>
     <category name="Variables" custom="VARIABLE" colour="%{BKY_VARIABLES_HUE}">
       <block type="variables_get"></block>
@@ -133,7 +154,7 @@
     }
 
     function runCode() {
-      updateCode(); // Ensure code is up-to-date
+      updateCode();
       const code = document.getElementById('code').textContent;
       try {
         const result = eval(code);
@@ -150,7 +171,6 @@
         .catch(err => alert("Failed to copy code: " + err));
     }
 
-    // Define custom blocks
     Blockly.defineBlocksWithJsonArray([
       {
         "type": "text_prompt",
