@@ -95,7 +95,12 @@
 </head>
 <body>
   <button id="themeToggle">🎨 Toggle Theme</button>
-  <h2 style="margin: 10px;">Blockly JavaScript Builder</h2>
+  <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin: 10px;">
+    <h2 style="margin: 0;">Blockly JavaScript Builder</h2>
+    <button onclick="saveWorkspace()">💾 Save</button>
+    <input type="file" id="loadFile" style="display: none;" accept=".xml" />
+    <button onclick="document.getElementById('loadFile').click()">📂 Load</button>
+  </div>
 
   <div id="main">
     <div id="blocklyDiv"></div>
@@ -280,6 +285,35 @@
         document.getElementById('errorMessage').textContent = "";
       }
     }
+
+    function saveWorkspace() {
+      const xml = Blockly.Xml.workspaceToDom(workspace);
+      const xmlText = Blockly.Xml.domToPrettyText(xml);
+      const blob = new Blob([xmlText], { type: 'text/xml' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'blockly_workspace.xml';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    document.getElementById('loadFile').addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const xmlText = e.target.result;
+        try {
+          const xml = Blockly.utils.xml.textToDom(xmlText); // ✅ FIXED
+          Blockly.Xml.clearWorkspaceAndLoadFromXml(xml, workspace);
+        } catch (err) {
+          alert("❌ Failed to load workspace: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    });
   </script>
 </body>
 </html>
