@@ -57,10 +57,14 @@
       border-top: 1px solid #ccc;
       background: #fff;
     }
-    button {
+    button, label[for="loadFile"] {
       margin-right: 10px;
       padding: 5px 10px;
       cursor: pointer;
+      background: #eee;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      display: inline-block;
     }
     #output {
       margin-top: 5px;
@@ -98,8 +102,8 @@
   <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin: 10px;">
     <h2 style="margin: 0;">Blockly JavaScript Builder</h2>
     <button onclick="saveWorkspace()">💾 Save</button>
-    <input type="file" id="loadFile" style="display: none;" accept=".xml" />
-    <button onclick="document.getElementById('loadFile').click()">📂 Load</button>
+    <label for="loadFile">📂 Load</label>
+    <input type="file" id="loadFile" accept=".xml" style="display: none;" />
   </div>
 
   <div id="main">
@@ -306,7 +310,7 @@
       reader.onload = function(e) {
         const xmlText = e.target.result;
         try {
-          const xml = Blockly.utils.xml.textToDom(xmlText); // ✅ FIXED
+          const xml = Blockly.utils.xml.textToDom(xmlText);
           Blockly.Xml.clearWorkspaceAndLoadFromXml(xml, workspace);
         } catch (err) {
           alert("❌ Failed to load workspace: " + err.message);
