@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Blockly JavaScript Builder</title>
   <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  <script src="https://unpkg.com/blockly/blocks_compressed.js"></script>
+  <script src="https://unpkg.com/blockly/msg/en.js"></script>
+  <script src="https://unpkg.com/blockly/zelos.js"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -45,7 +48,6 @@
       background: #eee;
       padding: 10px;
       border-radius: 5px;
-      height: 100%;
       margin: 0;
       white-space: pre-wrap;
       word-wrap: break-word;
@@ -61,19 +63,51 @@
       cursor: pointer;
     }
     #output {
-      margin-top: 10px;
+      margin-top: 5px;
       font-family: monospace;
+      white-space: pre-wrap;
+    }
+    #errorMessage {
+      margin-top: 5px;
+      color: red;
+      font-family: monospace;
+    }
+    #themeToggle {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+      background: #eee;
+      border: 1px solid #999;
+      border-radius: 4px;
+      padding: 5px 10px;
+    }
+    #loopControls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #loopInterval {
+      width: 80px;
+      padding: 4px;
     }
   </style>
 </head>
 <body>
+  <button id="themeToggle">🎨 Toggle Theme</button>
   <h2 style="margin: 10px;">Blockly JavaScript Builder</h2>
+
   <div id="main">
     <div id="blocklyDiv"></div>
     <div id="rightPanel">
       <div id="codeHeader">
         <h4 style="margin: 0;">📄 JavaScript Code</h4>
-        <button onclick="runCode()">▶ Run</button>
+        <div id="loopControls">
+          <input id="loopInterval" type="number" value="1000" min="100" />ms
+          <button onclick="runCode()">▶ Run</button>
+          <button onclick="startLoop()">🔁 Loop Run</button>
+          <button onclick="stopLoop()">⏹ Stop</button>
+        </div>
       </div>
       <div id="codeArea">
         <pre id="code"></pre>
@@ -82,11 +116,11 @@
         <button onclick="updateCode()">🔄 Update</button>
         <button onclick="copyCode()">📋 Copy Code</button>
         <div id="output"></div>
+        <div id="errorMessage"></div>
       </div>
     </div>
   </div>
 
-  <!-- Toolbox -->
   <xml id="toolbox" style="display: none">
     <category name="Logic" colour="%{BKY_LOGIC_HUE}">
       <block type="controls_if"></block>
@@ -96,14 +130,8 @@
       <block type="logic_negate"></block>
       <block type="logic_null"></block>
     </category>
-    <category name="Loops" colour="%{BKY_LOOPS_HUE}">
-      <block type="controls_repeat_ext"></block>
-      <block type="controls_whileUntil"></block>
-    </category>
     <category name="Math" colour="%{BKY_MATH_HUE}">
-      <block type="math_number">
-        <field name="NUM">0</field>
-      </block>
+      <block type="math_number"><field name="NUM">0</field></block>
       <block type="math_arithmetic"></block>
       <block type="math_round"></block>
       <block type="math_single"></block>
@@ -131,21 +159,64 @@
       <block type="text_isEmpty"></block>
       <block type="text_join"></block>
     </category>
-    <category name="Variables" custom="VARIABLE" colour="%{BKY_VARIABLES_HUE}">
-      <block type="variables_get"></block>
-      <block type="variables_set"></block>
-    </category>
-    <category name="Functions" colour="%{BKY_PROCEDURES_HUE}">
-      <block type="procedures_defnoreturn"></block>
-      <block type="procedures_callnoreturn"></block>
-    </category>
+    <category name="Variables" custom="VARIABLE" colour="%{BKY_VARIABLES_HUE}"></category>
+    <category name="Functions" custom="PROCEDURE" colour="%{BKY_PROCEDURES_HUE}"></category>
   </xml>
 
-  <!-- Blockly + JavaScript -->
   <script>
-    const workspace = Blockly.inject('blocklyDiv', {
-      toolbox: document.getElementById('toolbox'),
-      scrollbars: true,
+    Blockly.Themes.ScratchBright = Blockly.Theme.defineTheme('scratchTheme', {
+      base: Blockly.Themes.Classic,
+      blockStyles: {
+        logic_blocks: { colourPrimary: '#5C81A6' },
+        math_blocks: { colourPrimary: '#5C68A6' },
+        text_blocks: { colourPrimary: '#5CA68D' },
+        list_blocks: { colourPrimary: '#745CA6' },
+        variable_blocks: { colourPrimary: '#A65C81' },
+        procedure_blocks: { colourPrimary: '#8000ff' }
+      },
+      fontStyle: {
+        family: 'Helvetica, Arial, sans-serif',
+        size: 10
+      },
+      startHats: true
+    });
+
+    let usingScratchTheme = true;
+    let workspace;
+
+    function createWorkspace(theme, renderer) {
+      if (workspace) workspace.dispose();
+      workspace = Blockly.inject('blocklyDiv', {
+        toolbox: document.getElementById('toolbox'),
+        scrollbars: true,
+        theme,
+        renderer,
+        zoom: {
+          controls: true,
+          wheel: true,
+          startScale: 1.0,
+          maxScale: 3,
+          minScale: 0.3,
+          scaleSpeed: 1.2,
+          pinch: true
+        },
+        trashcan: true
+      });
+      workspace.addChangeListener(updateCode);
+      updateCode();
+    }
+
+    createWorkspace(Blockly.Themes.ScratchBright, 'zelos');
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      const confirmChange = window.confirm("Are you sure you want to change themes? This will delete your code.");
+      if (confirmChange) {
+        usingScratchTheme = !usingScratchTheme;
+        createWorkspace(
+          usingScratchTheme ? Blockly.Themes.ScratchBright : Blockly.Themes.Classic,
+          usingScratchTheme ? 'zelos' : 'geras'
+        );
+      }
     });
 
     function updateCode() {
@@ -156,11 +227,14 @@
     function runCode() {
       updateCode();
       const code = document.getElementById('code').textContent;
+      const outputDiv = document.getElementById('output');
+      const errorDiv = document.getElementById('errorMessage');
+      outputDiv.textContent = "";
+      errorDiv.textContent = "";
       try {
-        const result = eval(code);
-        document.getElementById('output').innerText = "Output: " + (result !== undefined ? result : "(no output)");
+        (async () => { await eval(`(async () => {\n${code}\n})()`); })();
       } catch (e) {
-        document.getElementById('output').innerText = "Error: " + e.message;
+        errorDiv.innerText = "❌ Error: " + e.message;
       }
     }
 
@@ -171,32 +245,41 @@
         .catch(err => alert("Failed to copy code: " + err));
     }
 
-    Blockly.defineBlocksWithJsonArray([
-      {
-        "type": "text_prompt",
-        "message0": "prompt with message %1",
-        "args0": [
-          {
-            "type": "input_value",
-            "name": "TEXT",
-            "check": "String"
+    let loopInterval = null;
+
+    function startLoop() {
+      stopLoop();
+      updateCode();
+      const code = document.getElementById('code').textContent;
+      const outputDiv = document.getElementById('output');
+      const errorDiv = document.getElementById('errorMessage');
+      const interval = parseInt(document.getElementById('loopInterval').value) || 1000;
+      outputDiv.textContent = "";
+      errorDiv.textContent = "";
+      try {
+        loopInterval = setInterval(() => {
+          try {
+            errorDiv.textContent = "";
+            (async () => { await eval(`(async () => {\n${code}\n})()`); })();
+          } catch (e) {
+            outputDiv.textContent = "";
+            errorDiv.textContent = "❌ Loop Error: " + e.message;
+            stopLoop();
           }
-        ],
-        "output": "String",
-        "colour": 160,
-        "tooltip": "Prompts the user for input.",
-        "helpUrl": ""
+        }, interval);
+      } catch (e) {
+        errorDiv.textContent = "❌ Setup Error: " + e.message;
       }
-    ]);
+    }
 
-    Blockly.JavaScript['text_prompt'] = function(block) {
-      const msg = Blockly.JavaScript.valueToCode(block, 'TEXT', Blockly.JavaScript.ORDER_NONE) || '""';
-      const code = `prompt(${msg})`;
-      return [code, Blockly.JavaScript.ORDER_FUNCTION_CALL];
-    };
-
-    workspace.addChangeListener(updateCode);
-    updateCode();
+    function stopLoop() {
+      if (loopInterval) {
+        clearInterval(loopInterval);
+        loopInterval = null;
+        document.getElementById('output').textContent += "\n⏹ Loop stopped.";
+        document.getElementById('errorMessage').textContent = "";
+      }
+    }
   </script>
 </body>
 </html>
