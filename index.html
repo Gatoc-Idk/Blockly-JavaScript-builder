@@ -76,15 +76,11 @@
       color: red;
       font-family: monospace;
     }
-    #themeToggle {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 1000;
-      background: #eee;
-      border: 1px solid #999;
-      border-radius: 4px;
-      padding: 5px 10px;
+    #settingsPanel {
+      display: none;
+      justify-content: center;
+      gap: 10px;
+      margin: 10px;
     }
     #loopControls {
       display: flex;
@@ -98,9 +94,16 @@
   </style>
 </head>
 <body>
-  <button id="themeToggle">🎨 Toggle Theme</button>
+
+  <!-- Header and Settings Button -->
   <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin: 10px;">
     <h2 style="margin: 0;">Blockly JavaScript Builder</h2>
+    <button id="settingsButton">⚙️ Settings</button>
+  </div>
+
+  <!-- Settings Panel -->
+  <div id="settingsPanel">
+    <button id="themeToggle">🎨 Toggle Theme</button>
     <button onclick="saveWorkspace()">💾 Save</button>
     <label for="loadFile">📂 Load</label>
     <input type="file" id="loadFile" accept=".xml" style="display: none;" />
@@ -130,7 +133,7 @@
     </div>
   </div>
 
-  <!-- ✅ TOOLBOX WITH ENHANCED LOOP CATEGORY -->
+  <!-- Toolbox -->
   <xml id="toolbox" style="display: none">
     <category name="Logic" colour="%{BKY_LOGIC_HUE}">
       <block type="controls_if"></block>
@@ -169,8 +172,6 @@
       <block type="text_isEmpty"></block>
       <block type="text_join"></block>
     </category>
-
-    <!-- 🔁 Enhanced Loop Category -->
     <category name="Loops" colour="%{BKY_LOOPS_HUE}">
       <block type="controls_repeat_ext">
         <value name="TIMES">
@@ -183,7 +184,6 @@
         <field name="MODE">WHILE</field>
       </block>
     </category>
-
     <category name="Variables" custom="VARIABLE" colour="%{BKY_VARIABLES_HUE}"></category>
     <category name="Functions" custom="PROCEDURE" colour="%{BKY_PROCEDURES_HUE}"></category>
   </xml>
@@ -242,6 +242,11 @@
           usingScratchTheme ? 'zelos' : 'geras'
         );
       }
+    });
+
+    document.getElementById('settingsButton').addEventListener('click', () => {
+      const panel = document.getElementById('settingsPanel');
+      panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
     });
 
     function updateCode() {
