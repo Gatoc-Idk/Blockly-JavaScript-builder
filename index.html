@@ -4,136 +4,153 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Blockly JavaScript Builder</title>
-  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
   <script src="https://unpkg.com/blockly/blocks_compressed.js"></script>
+  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
   <script src="https://unpkg.com/blockly/msg/en.js"></script>
-  <script src="https://unpkg.com/blockly/zelos.js"></script>
   <style>
     body {
-      font-family: sans-serif;
       margin: 0;
+      font-family: sans-serif;
       display: flex;
       flex-direction: column;
       height: 100vh;
+      transition: background 0.3s, color 0.3s;
     }
+
+    #toolbar {
+      position: relative; /* ✅ Needed for absolute positioning */
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background: #f5f5f5;
+      border-bottom: 1px solid #ccc;
+    }
+
+    #settingsToggle {
+      position: absolute; /* ✅ Moved to top-right */
+      top: 10px;
+      right: 10px;
+    }
+
+    #settingsPanel {
+      display: none;
+      position: absolute;
+      top: 60px;
+      right: 20px;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 5px;
+      z-index: 999;
+    }
+
     #main {
       display: flex;
       flex: 1;
     }
+
     #blocklyDiv {
-      height: 100%;
       width: 60%;
+      height: 100%;
+      background: #fff;
+      transition: background 0.3s;
     }
+
     #rightPanel {
       width: 40%;
+      padding: 10px;
+      border-left: 1px solid #ccc;
+      background: #fafafa;
       display: flex;
       flex-direction: column;
-      border-left: 1px solid #ccc;
-      background: #f9f9f9;
     }
-    #codeHeader {
-      padding: 10px;
-      background: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid #ccc;
-    }
+
     #codeArea {
       flex: 1;
+      background: #eee;
+      border-radius: 5px;
       padding: 10px;
       overflow: auto;
+      color: #000;
     }
-    #codeArea pre {
-      background: #eee;
-      padding: 10px;
-      border-radius: 5px;
-      margin: 0;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
-    #buttons {
-      padding: 10px;
-      border-top: 1px solid #ccc;
-      background: #fff;
-    }
-    button, label[for="loadFile"] {
-      margin-right: 10px;
+
+    button, label {
+      margin-bottom: 5px;
       padding: 5px 10px;
+      border-radius: 4px;
       cursor: pointer;
       background: #eee;
+      color: #000;
       border: 1px solid #ccc;
-      border-radius: 4px;
-      display: inline-block;
     }
-    #output {
-      margin-top: 5px;
-      font-family: monospace;
+
+    input[type="file"] {
+      display: none;
+    }
+
+    pre {
       white-space: pre-wrap;
     }
-    #errorMessage {
-      margin-top: 5px;
-      color: red;
-      font-family: monospace;
+
+    body.dark {
+      background: #2b2b2b;
+      color: white;
     }
-    #settingsPanel {
-      display: none;
-      justify-content: center;
-      gap: 10px;
-      margin: 10px;
+
+    body.dark #toolbar,
+    body.dark #settingsPanel,
+    body.dark #rightPanel,
+    body.dark #codeArea,
+    body.dark #blocklyDiv {
+      background-color: #2b2b2b !important;
+      color: white;
     }
-    #loopControls {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+
+    body.dark #settingsPanel,
+    body.dark #rightPanel,
+    body.dark #codeArea {
+      border-color: #444;
     }
-    #loopInterval {
-      width: 80px;
-      padding: 4px;
+
+    body.dark button,
+    body.dark label {
+      background: #3b3b3b;
+      color: white;
+      border: 1px solid #555;
+    }
+
+    body.dark .blocklyTreeLabel {
+      color: black !important;
     }
   </style>
 </head>
 <body>
 
-  <!-- Header and Settings Button -->
-  <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin: 10px;">
+  <div id="toolbar">
     <h2 style="margin: 0;">Blockly JavaScript Builder</h2>
-    <button id="settingsButton">⚙️ Settings</button>
+    <button id="settingsToggle">⚙️ Settings</button>
   </div>
 
-  <!-- Settings Panel -->
   <div id="settingsPanel">
-    <button id="themeToggle">🎨 Toggle Theme</button>
-    <button onclick="saveWorkspace()">💾 Save</button>
+    <button id="darkModeToggle">🌓 Toggle Light/Dark Mode</button><br><br>
+    <button onclick="saveWorkspace()">💾 Save</button><br><br>
     <label for="loadFile">📂 Load</label>
-    <input type="file" id="loadFile" accept=".xml" style="display: none;" />
+    <input type="file" id="loadFile" accept=".xml" /><br><br>
+    <button onclick="workspace.zoomCenter(1)">➕ Zoom In</button>
+    <button onclick="workspace.zoomCenter(-1)">➖ Zoom Out</button>
+    <button onclick="workspace.zoomToFit()">🧭 Fit</button>
+    <button onclick="workspace.setScale(1)">🔄 Reset Zoom</button>
   </div>
 
   <div id="main">
     <div id="blocklyDiv"></div>
     <div id="rightPanel">
-      <div id="codeHeader">
-        <h4 style="margin: 0;">📄 JavaScript Code</h4>
-        <div id="loopControls">
-          <input id="loopInterval" type="number" value="1000" min="100" />ms
-          <button onclick="runCode()">▶ Run</button>
-          <button onclick="startLoop()">🔁 Loop Run</button>
-          <button onclick="stopLoop()">⏹ Stop</button>
-        </div>
-      </div>
-      <div id="codeArea">
-        <pre id="code"></pre>
-      </div>
-      <div id="buttons">
-        <button onclick="updateCode()">🔄 Update</button>
-        <button onclick="copyCode()">📋 Copy Code</button>
-        <div id="output"></div>
-        <div id="errorMessage"></div>
-      </div>
+      <button onclick="runCode()">▶ Run</button>
+      <button onclick="copyCode()">📋 Copy</button>
+      <pre id="codeArea"></pre>
     </div>
   </div>
 
-  <!-- Toolbox -->
   <xml id="toolbox" style="display: none">
     <category name="Logic" colour="%{BKY_LOGIC_HUE}">
       <block type="controls_if"></block>
@@ -144,7 +161,7 @@
       <block type="logic_null"></block>
     </category>
     <category name="Math" colour="%{BKY_MATH_HUE}">
-      <block type="math_number"><field name="NUM">0</field></block>
+      <block type="math_number"></block>
       <block type="math_arithmetic"></block>
       <block type="math_round"></block>
       <block type="math_single"></block>
@@ -174,15 +191,9 @@
     </category>
     <category name="Loops" colour="%{BKY_LOOPS_HUE}">
       <block type="controls_repeat_ext">
-        <value name="TIMES">
-          <shadow type="math_number">
-            <field name="NUM">10</field>
-          </shadow>
-        </value>
+        <value name="TIMES"><shadow type="math_number"><field name="NUM">10</field></shadow></value>
       </block>
-      <block type="controls_whileUntil">
-        <field name="MODE">WHILE</field>
-      </block>
+      <block type="controls_whileUntil"><field name="MODE">WHILE</field></block>
     </category>
     <category name="Variables" custom="VARIABLE" colour="%{BKY_VARIABLES_HUE}"></category>
     <category name="Functions" custom="PROCEDURE" colour="%{BKY_PROCEDURES_HUE}"></category>
@@ -199,27 +210,23 @@
         variable_blocks: { colourPrimary: '#A65C81' },
         procedure_blocks: { colourPrimary: '#8000ff' }
       },
-      fontStyle: {
-        family: 'Helvetica, Arial, sans-serif',
-        size: 10
-      },
+      fontStyle: { family: 'Helvetica, Arial, sans-serif', size: 10 },
       startHats: true
     });
 
-    let usingScratchTheme = true;
+    const currentTheme = Blockly.Themes.ScratchBright;
     let workspace;
 
-    function createWorkspace(theme, renderer) {
+    function injectWorkspace(theme) {
       if (workspace) workspace.dispose();
       workspace = Blockly.inject('blocklyDiv', {
         toolbox: document.getElementById('toolbox'),
-        scrollbars: true,
         theme,
-        renderer,
+        renderer: 'zelos',
         zoom: {
           controls: true,
           wheel: true,
-          startScale: 1.0,
+          startScale: 1,
           maxScale: 3,
           minScale: 0.3,
           scaleSpeed: 1.2,
@@ -227,114 +234,56 @@
         },
         trashcan: true
       });
-      workspace.addChangeListener(updateCode);
-      updateCode();
+      workspace.addChangeListener(() => {
+        document.getElementById('codeArea').textContent = Blockly.JavaScript.workspaceToCode(workspace);
+      });
     }
 
-    createWorkspace(Blockly.Themes.ScratchBright, 'zelos');
+    injectWorkspace(currentTheme);
 
-    document.getElementById('themeToggle').addEventListener('click', () => {
-      const confirmChange = window.confirm("Are you sure you want to change themes? This will delete your code.");
-      if (confirmChange) {
-        usingScratchTheme = !usingScratchTheme;
-        createWorkspace(
-          usingScratchTheme ? Blockly.Themes.ScratchBright : Blockly.Themes.Classic,
-          usingScratchTheme ? 'zelos' : 'geras'
-        );
-      }
+    document.getElementById('darkModeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('dark');
     });
 
-    document.getElementById('settingsButton').addEventListener('click', () => {
+    document.getElementById('settingsToggle').addEventListener('click', () => {
       const panel = document.getElementById('settingsPanel');
-      panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
     });
-
-    function updateCode() {
-      const code = Blockly.JavaScript.workspaceToCode(workspace);
-      document.getElementById('code').textContent = code;
-    }
 
     function runCode() {
-      updateCode();
-      const code = document.getElementById('code').textContent;
-      const outputDiv = document.getElementById('output');
-      const errorDiv = document.getElementById('errorMessage');
-      outputDiv.textContent = "";
-      errorDiv.textContent = "";
       try {
-        (async () => { await eval(`(async () => {\n${code}\n})()`); })();
-      } catch (e) {
-        errorDiv.innerText = "❌ Error: " + e.message;
+        eval(document.getElementById('codeArea').textContent);
+      } catch (err) {
+        alert("Error: " + err.message);
       }
     }
 
     function copyCode() {
-      const code = document.getElementById('code').textContent;
-      navigator.clipboard.writeText(code)
-        .then(() => alert("Code copied to clipboard!"))
-        .catch(err => alert("Failed to copy code: " + err));
-    }
-
-    let loopInterval = null;
-
-    function startLoop() {
-      stopLoop();
-      updateCode();
-      const code = document.getElementById('code').textContent;
-      const outputDiv = document.getElementById('output');
-      const errorDiv = document.getElementById('errorMessage');
-      const interval = parseInt(document.getElementById('loopInterval').value) || 1000;
-      outputDiv.textContent = "";
-      errorDiv.textContent = "";
-      try {
-        loopInterval = setInterval(() => {
-          try {
-            errorDiv.textContent = "";
-            (async () => { await eval(`(async () => {\n${code}\n})()`); })();
-          } catch (e) {
-            outputDiv.textContent = "";
-            errorDiv.textContent = "❌ Loop Error: " + e.message;
-            stopLoop();
-          }
-        }, interval);
-      } catch (e) {
-        errorDiv.textContent = "❌ Setup Error: " + e.message;
-      }
-    }
-
-    function stopLoop() {
-      if (loopInterval) {
-        clearInterval(loopInterval);
-        loopInterval = null;
-        document.getElementById('output').textContent += "\n⏹ Loop stopped.";
-        document.getElementById('errorMessage').textContent = "";
-      }
+      navigator.clipboard.writeText(document.getElementById('codeArea').textContent)
+        .then(() => alert("Code copied!"))
+        .catch(err => alert("Failed to copy: " + err));
     }
 
     function saveWorkspace() {
       const xml = Blockly.Xml.workspaceToDom(workspace);
-      const xmlText = Blockly.Xml.domToPrettyText(xml);
+      const xmlText = Blockly.utils.xml.domToText(xml);
       const blob = new Blob([xmlText], { type: 'text/xml' });
-      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = 'blockly_workspace.xml';
+      a.href = URL.createObjectURL(blob);
+      a.download = "workspace.xml";
       a.click();
-      URL.revokeObjectURL(url);
     }
 
-    document.getElementById('loadFile').addEventListener('change', function(event) {
-      const file = event.target.files[0];
+    document.getElementById('loadFile').addEventListener('change', function (e) {
+      const file = e.target.files[0];
       if (!file) return;
-
       const reader = new FileReader();
-      reader.onload = function(e) {
-        const xmlText = e.target.result;
+      reader.onload = function (e) {
         try {
-          const xml = Blockly.utils.xml.textToDom(xmlText);
+          const xml = Blockly.utils.xml.textToDom(e.target.result);
           Blockly.Xml.clearWorkspaceAndLoadFromXml(xml, workspace);
         } catch (err) {
-          alert("❌ Failed to load workspace: " + err.message);
+          alert("❌ Load failed: " + err.message);
         }
       };
       reader.readAsText(file);
