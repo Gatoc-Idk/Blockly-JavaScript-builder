@@ -18,7 +18,7 @@
     }
 
     #toolbar {
-      position: relative; /* ✅ Needed for absolute positioning */
+      position: relative;
       display: flex;
       align-items: center;
       padding: 10px;
@@ -26,10 +26,16 @@
       border-bottom: 1px solid #ccc;
     }
 
-    #settingsToggle {
-      position: absolute; /* ✅ Moved to top-right */
-      top: 10px;
+    #toolbar h2 {
+      margin: 0;
+    }
+
+    #toolbar .right-buttons {
+      display: flex;
+      gap: 10px;
+      position: absolute;
       right: 10px;
+      top: 10px;
     }
 
     #settingsPanel {
@@ -127,8 +133,11 @@
 <body>
 
   <div id="toolbar">
-    <h2 style="margin: 0;">Blockly JavaScript Builder</h2>
-    <button id="settingsToggle">⚙️ Settings</button>
+    <h2>Blockly JavaScript Builder</h2>
+    <div class="right-buttons">
+      <button onclick="window.open('https://discord.gg/5fNTJ7JW', '_blank')">💬 Join Discord</button>
+      <button id="settingsToggle">⚙️ Settings</button>
+    </div>
   </div>
 
   <div id="settingsPanel">
@@ -191,7 +200,9 @@
     </category>
     <category name="Loops" colour="%{BKY_LOOPS_HUE}">
       <block type="controls_repeat_ext">
-        <value name="TIMES"><shadow type="math_number"><field name="NUM">10</field></shadow></value>
+        <value name="TIMES">
+          <shadow type="math_number"><field name="NUM">10</field></shadow>
+        </value>
       </block>
       <block type="controls_whileUntil"><field name="MODE">WHILE</field></block>
     </category>
