@@ -28,6 +28,9 @@
 
     #toolbar h2 {
       margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
     #toolbar .right-buttons {
@@ -133,9 +136,12 @@
 <body>
 
   <div id="toolbar">
-    <h2>Blockly JavaScript Builder</h2>
+    <h2>
+      <img src="https://i.imgur.com/SkLyQ4s.png" alt="Logo" style="height: 30px;">
+      Blockly JavaScript Builder
+    </h2>
     <div class="right-buttons">
-      <button onclick="window.open('https://discord.gg/5fNTJ7JW', '_blank')">💬 Join Discord</button>
+      <button onclick="window.open('https://discord.gg/QzajRf5H', '_blank')">💬 Join Discord</button>
       <button id="settingsToggle">⚙️ Settings</button>
     </div>
   </div>
