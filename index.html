@@ -51,6 +51,7 @@
       padding: 10px;
       border-radius: 5px;
       z-index: 999;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
 
     #main {
@@ -74,6 +75,57 @@
       flex-direction: column;
     }
 
+    #canvasContainer {
+      background: white;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    #drawingCanvas {
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background: white;
+      display: block;
+      margin: 5px auto;
+    }
+
+    #canvasControls {
+      display: flex;
+      gap: 5px;
+      justify-content: center;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    #canvasControls button {
+      padding: 4px 8px;
+      font-size: 11px;
+      min-width: auto;
+    }
+
+    .canvas-title {
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #333;
+    }
+
+    body.dark #canvasContainer {
+      background: #3a3a3a;
+      border-color: #555;
+    }
+
+    body.dark .canvas-title {
+      color: #fff;
+    }
+
+    body.dark #drawingCanvas {
+      border-color: #555;
+    }
+
     #codeArea {
       flex: 1;
       background: #eee;
@@ -81,16 +133,75 @@
       padding: 10px;
       overflow: auto;
       color: #000;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+    }
+
+    #errorPanel {
+      background: #ffe6e6;
+      border: 1px solid #ffcccc;
+      border-radius: 5px;
+      padding: 10px;
+      margin-bottom: 10px;
+      display: none;
+      color: #d32f2f;
+    }
+
+    #errorPanel.show {
+      display: block;
+    }
+
+    #successPanel {
+      background: #e8f5e8;
+      border: 1px solid #c8e6c8;
+      border-radius: 5px;
+      padding: 10px;
+      margin-bottom: 10px;
+      display: none;
+      color: #2e7d32;
+    }
+
+    #successPanel.show {
+      display: block;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 10px;
     }
 
     button, label {
       margin-bottom: 5px;
-      padding: 5px 10px;
+      padding: 8px 12px;
       border-radius: 4px;
       cursor: pointer;
-      background: #eee;
-      color: #000;
-      border: 1px solid #ccc;
+      background: #2196F3;
+      color: white;
+      border: none;
+      font-size: 12px;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background: #1976D2;
+    }
+
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    button.success {
+      background: #4CAF50;
+    }
+
+    button.warning {
+      background: #FF9800;
+    }
+
+    button.error {
+      background: #f44336;
     }
 
     input[type="file"] {
@@ -99,6 +210,7 @@
 
     pre {
       white-space: pre-wrap;
+      margin: 0;
     }
 
     body.dark {
@@ -128,8 +240,64 @@
       border: 1px solid #555;
     }
 
-    body.dark .blocklyTreeLabel {
-      color: black !important;
+    body.dark #errorPanel {
+      background: #4a1f1f;
+      border-color: #6a2c2c;
+      color: #ff6b6b;
+    }
+
+    body.dark #successPanel {
+      background: #1f4a1f;
+      border-color: #2c6a2c;
+      color: #6bcf6b;
+    }
+
+    .tooltip {
+      position: relative;
+      display: inline-block;
+    }
+
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 200px;
+      background-color: #555;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -100px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 11px;
+    }
+
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    #debugPanel {
+      background: #f0f8ff;
+      border: 1px solid #b0d4ff;
+      border-radius: 5px;
+      padding: 10px;
+      margin-bottom: 10px;
+      display: none;
+      font-size: 11px;
+    }
+
+    #debugPanel.show {
+      display: block;
+    }
+
+    body.dark #debugPanel {
+      background: #1a2332;
+      border-color: #2a4565;
+      color: #87ceeb;
     }
   </style>
 </head>
@@ -141,7 +309,7 @@
       Blockly JavaScript Builder
     </h2>
     <div class="right-buttons">
-      <button onclick="window.open('https://discord.gg/QzajRf5H', '_blank')">💬 Join Discord</button>
+      <button onclick="window.open('https://discord.gg/xzPTxqNR', '_blank')">💬 Join Discord</button>
       <button id="settingsToggle">⚙️ Settings</button>
     </div>
   </div>
@@ -154,14 +322,57 @@
     <button onclick="workspace.zoomCenter(1)">➕ Zoom In</button>
     <button onclick="workspace.zoomCenter(-1)">➖ Zoom Out</button>
     <button onclick="workspace.zoomToFit()">🧭 Fit</button>
-    <button onclick="workspace.setScale(1)">🔄 Reset Zoom</button>
+    <button onclick="workspace.setScale(1)">🔄 Reset Zoom</button><br><br>
   </div>
 
   <div id="main">
     <div id="blocklyDiv"></div>
     <div id="rightPanel">
-      <button onclick="runCode()">▶ Run</button>
-      <button onclick="copyCode()">📋 Copy</button>
+      <div id="canvasContainer">
+        <div class="canvas-title">🎨 Canvas Output</div>
+        <canvas id="drawingCanvas" width="300" height="200"></canvas>
+        <div id="canvasControls">
+          <button onclick="clearCanvas()" class="tooltip">
+            🗑️ Clear
+            <span class="tooltiptext">Clear the canvas</span>
+          </button>
+          <button onclick="saveCanvas()" class="tooltip">
+            💾 Save PNG
+            <span class="tooltiptext">Download canvas as image</span>
+          </button>
+          <button onclick="resetCanvas()" class="tooltip">
+            🔄 Reset
+            <span class="tooltiptext">Reset canvas to white background</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="errorPanel">
+        <strong>⚠️ Error:</strong>
+        <div id="errorMessage"></div>
+      </div>
+      
+      <div id="successPanel">
+        <strong>✅ Success:</strong>
+        <div id="successMessage"></div>
+      </div>
+
+
+      <div class="button-group">
+        <button onclick="runCode()" class="tooltip">
+          ▶ Run
+          <span class="tooltiptext">Execute the generated code</span>
+        </button>
+        <button onclick="validateCode()" class="tooltip warning">
+          ✓ Validate
+          <span class="tooltiptext">Check code for common issues</span>
+        </button>
+        <button onclick="copyCode()" class="tooltip">
+          📋 Copy
+          <span class="tooltiptext">Copy code to clipboard</span>
+        </button>
+      </div>
+
       <pre id="codeArea"></pre>
     </div>
   </div>
@@ -184,7 +395,6 @@
       <block type="math_random_int"></block>
     </category>
     <category name="Lists" colour="%{BKY_LISTS_HUE}">
-      <block type="lists_create_empty"></block>
       <block type="lists_create_with"></block>
       <block type="lists_repeat"></block>
       <block type="lists_length"></block>
@@ -203,6 +413,7 @@
       <block type="text_length"></block>
       <block type="text_isEmpty"></block>
       <block type="text_join"></block>
+      <block type="text_confirm"></block>
     </category>
     <category name="Loops" colour="%{BKY_LOOPS_HUE}">
       <block type="controls_repeat_ext">
@@ -214,9 +425,108 @@
     </category>
     <category name="Variables" custom="VARIABLE" colour="%{BKY_VARIABLES_HUE}"></category>
     <category name="Functions" custom="PROCEDURE" colour="%{BKY_PROCEDURES_HUE}"></category>
+    <category name="Canvas" colour="#4CAF50">
+      <block type="canvas_clear"></block>
+      <block type="canvas_set_color"></block>
+      <block type="canvas_set_size"></block>
+      <block type="canvas_draw_rect"></block>
+      <block type="canvas_draw_circle"></block>
+      <block type="canvas_draw_line"></block>
+      <block type="canvas_draw_text"></block>
+      <block type="canvas_fill_rect"></block>
+      <block type="canvas_fill_circle"></block>
+      <block type="canvas_move_to"></block>
+      <block type="canvas_line_to"></block>
+      <block type="canvas_begin_path"></block>
+      <block type="canvas_stroke"></block>
+      <block type="canvas_fill"></block>
+    </category>
+    <category name="Error Handling" colour="#FF6B6B">
+      <block type="error_try_catch"></block>
+      <block type="error_throw"></block>
+      <block type="error_console_log"></block>
+    </category>
   </xml>
 
   <script>
+    // Enhanced Error Handling System
+    class ErrorHandler {
+      static showError(message, details = '') {
+        const errorPanel = document.getElementById('errorPanel');
+        const errorMessage = document.getElementById('errorMessage');
+        errorMessage.innerHTML = `${message}${details ? '<br><small>' + details + '</small>' : ''}`;
+        errorPanel.classList.add('show');
+        this.hideSuccess();
+        this.hideDebug();
+        
+        // Auto-hide after 10 seconds
+        setTimeout(() => this.hideError(), 10000);
+      }
+
+      static showSuccess(message) {
+        const successPanel = document.getElementById('successPanel');
+        const successMessage = document.getElementById('successMessage');
+        successMessage.textContent = message;
+        successPanel.classList.add('show');
+        this.hideError();
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => this.hideSuccess(), 5000);
+      }
+
+      static showDebug(message) {
+        if (!window.debugMode) return;
+        const debugPanel = document.getElementById('debugPanel');
+        const debugMessage = document.getElementById('debugMessage');
+        debugMessage.textContent = message;
+        debugPanel.classList.add('show');
+        
+        // Auto-hide after 8 seconds
+        setTimeout(() => this.hideDebug(), 8000);
+      }
+
+      static hideError() {
+        document.getElementById('errorPanel').classList.remove('show');
+      }
+
+      static hideSuccess() {
+        document.getElementById('successPanel').classList.remove('show');
+      }
+
+      static hideDebug() {
+        document.getElementById('debugPanel').classList.remove('show');
+      }
+
+      static validateCode(code) {
+        const issues = [];
+        
+        // Check for common JavaScript issues
+        if (code.includes('undefined')) {
+          issues.push('Possible undefined variable usage detected');
+        }
+        
+        if (code.includes('null') && !code.includes('!== null') && !code.includes('== null')) {
+          issues.push('Null value detected - consider null checking');
+        }
+        
+        
+        // Check for empty blocks
+        if (code.trim() === '') {
+          issues.push('No code to execute');
+        }
+        
+        return issues;
+      }
+    }
+
+    // Global error handler for uncaught exceptions
+    window.onerror = function(message, source, lineno, colno, error) {
+      ErrorHandler.showError('Runtime Error', `${message} at line ${lineno}`);
+      return true;
+    };
+
+    window.debugMode = false;
+
     Blockly.Themes.ScratchBright = Blockly.Theme.defineTheme('scratchTheme', {
       base: Blockly.Themes.Classic,
       blockStyles: {
@@ -225,7 +535,8 @@
         text_blocks: { colourPrimary: '#5CA68D' },
         list_blocks: { colourPrimary: '#745CA6' },
         variable_blocks: { colourPrimary: '#A65C81' },
-        procedure_blocks: { colourPrimary: '#8000ff' }
+        procedure_blocks: { colourPrimary: '#8000ff' },
+        error_blocks: { colourPrimary: '#FF6B6B' }
       },
       fontStyle: { family: 'Helvetica, Arial, sans-serif', size: 10 },
       startHats: true
@@ -236,75 +547,598 @@
 
     function injectWorkspace(theme) {
       if (workspace) workspace.dispose();
-      workspace = Blockly.inject('blocklyDiv', {
-        toolbox: document.getElementById('toolbox'),
-        theme,
-        renderer: 'zelos',
-        zoom: {
-          controls: true,
-          wheel: true,
-          startScale: 1,
-          maxScale: 3,
-          minScale: 0.3,
-          scaleSpeed: 1.2,
-          pinch: true
-        },
-        trashcan: true
-      });
-      workspace.addChangeListener(() => {
-        document.getElementById('codeArea').textContent = Blockly.JavaScript.workspaceToCode(workspace);
-      });
-    }
-
-    injectWorkspace(currentTheme);
-
-    document.getElementById('darkModeToggle').addEventListener('click', () => {
-      document.body.classList.toggle('dark');
-    });
-
-    document.getElementById('settingsToggle').addEventListener('click', () => {
-      const panel = document.getElementById('settingsPanel');
-      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-    });
-
-    function runCode() {
+      
       try {
-        eval(document.getElementById('codeArea').textContent);
-      } catch (err) {
-        alert("Error: " + err.message);
+        workspace = Blockly.inject('blocklyDiv', {
+          toolbox: document.getElementById('toolbox'),
+          theme,
+          renderer: 'zelos',
+          zoom: {
+            controls: true,
+            wheel: true,
+            startScale: 1,
+            maxScale: 3,
+            minScale: 0.3,
+            scaleSpeed: 1.2,
+            pinch: true
+          },
+          trashcan: true
+        });
+        
+        workspace.addChangeListener(() => {
+          try {
+            const code = Blockly.JavaScript.workspaceToCode(workspace);
+            document.getElementById('codeArea').textContent = code;
+            ErrorHandler.showDebug(`Code generated: ${code.length} characters`);
+          } catch (error) {
+            ErrorHandler.showError('Code Generation Error', error.message);
+          }
+        });
+        
+        ErrorHandler.showSuccess('Workspace initialized successfully');
+        
+        // Initialize canvas after workspace
+        initCanvas();
+      } catch (error) {
+        ErrorHandler.showError('Workspace Initialization Error', error.message);
       }
     }
 
-    function copyCode() {
-      navigator.clipboard.writeText(document.getElementById('codeArea').textContent)
-        .then(() => alert("Code copied!"))
-        .catch(err => alert("Failed to copy: " + err));
+    // Canvas context for drawing
+    let canvas, ctx;
+    
+    // Initialize canvas
+    function initCanvas() {
+      canvas = document.getElementById('drawingCanvas');
+      ctx = canvas.getContext('2d');
+      resetCanvas();
     }
 
+    // Canvas utility functions
+    function clearCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ErrorHandler.showSuccess('Canvas cleared');
+    }
+
+    function resetCanvas() {
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = 'black';
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 1;
+      ErrorHandler.showDebug('Canvas reset to defaults');
+    }
+
+    function saveCanvas() {
+      try {
+        const link = document.createElement('a');
+        link.download = 'canvas-drawing.png';
+        link.href = canvas.toDataURL();
+        link.click();
+        ErrorHandler.showSuccess('Canvas saved as PNG');
+      } catch (error) {
+        ErrorHandler.showError('Save Error', error.message);
+      }
+    }
+
+    // Define all custom blocks and their generators BEFORE initializing workspace
+    
+    // Fixed confirm block definition
+    Blockly.Blocks['text_confirm'] = {
+      init: function() {
+        this.appendValueInput("TEXT")
+            .setCheck("String")
+            .appendField("confirm");
+        this.setOutput(true, "Boolean");
+        this.setColour(160);
+        this.setTooltip("Shows a confirm dialog with text and returns true if OK pressed");
+        this.setHelpUrl("");
+      }
+    };
+
+    // Fixed JavaScript generator for confirm block
+    Blockly.JavaScript.forBlock['text_confirm'] = function(block) {
+      var text = Blockly.JavaScript.valueToCode(block, 'TEXT', Blockly.JavaScript.ORDER_NONE) || '""';
+      var code = 'confirm(' + text + ')';
+      return [code, Blockly.JavaScript.ORDER_FUNCTION_CALL];
+    };
+
+    // Error handling blocks
+    Blockly.Blocks['error_try_catch'] = {
+      init: function() {
+        this.appendStatementInput("TRY")
+            .setCheck(null)
+            .appendField("try");
+        this.appendStatementInput("CATCH")
+            .setCheck(null)
+            .appendField("catch error");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour('#FF6B6B');
+        this.setTooltip("Try to execute code, catch any errors");
+      }
+    };
+
+    Blockly.JavaScript.forBlock['error_try_catch'] = function(block) {
+      var tryCode = Blockly.JavaScript.statementToCode(block, 'TRY');
+      var catchCode = Blockly.JavaScript.statementToCode(block, 'CATCH');
+      var code = `try {\n${tryCode}} catch (error) {\n${catchCode}}\n`;
+      return code;
+    };
+
+    Blockly.Blocks['error_throw'] = {
+      init: function() {
+        this.appendValueInput("MESSAGE")
+            .setCheck("String")
+            .appendField("throw error");
+        this.setPreviousStatement(true, null);
+        this.setColour('#FF6B6B');
+        this.setTooltip("Throw an error with a message");
+      }
+    };
+
+    Blockly.JavaScript.forBlock['error_throw'] = function(block) {
+      var message = Blockly.JavaScript.valueToCode(block, 'MESSAGE', Blockly.JavaScript.ORDER_NONE) || '""';
+      var code = `throw new Error(${message});\n`;
+      return code;
+    };
+
+    Blockly.Blocks['error_console_log'] = {
+      init: function() {
+        this.appendValueInput("MESSAGE")
+            .setCheck(null)
+            .appendField("console log");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour('#FF6B6B');
+        this.setTooltip("Log a message to the browser console");
+      }
+    };
+
+    Blockly.JavaScript.forBlock['error_console_log'] = function(block) {
+      var message = Blockly.JavaScript.valueToCode(block, 'MESSAGE', Blockly.JavaScript.ORDER_NONE) || '""';
+      var code = `console.log(${message});\n`;
+      return code;
+    };
+
+    // Canvas blocks definitions
+    Blockly.Blocks['canvas_clear'] = {
+      init: function() {
+        this.appendDummyInput()
+            .appendField("clear canvas");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour('#4CAF50');
+        this.setTooltip("Clear the entire canvas");
+      }
+    };
+
+    Blockly.JavaScript.forBlock['canvas_clear'] = function(block) {
+      return 'ctx.clearRect(0, 0, canvas.width, canvas.height);\n';
+    };
+
+    Blockly.Blocks['canvas_set_color'] = {
+      init: function() {
+        this.appendValueInput("COLOR")
+            .setCheck("String")
+            .appendField("set color to");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour('#4CAF50');
+        this.setTooltip("Set the drawing color (e.g., 'red', '#FF0000')");
+      }
+    };
+
+    Blockly.JavaScript.forBlock['canvas_set_color'] = function(block) {
+      var color = Blockly.JavaScript.valueToCode(block, 'COLOR', Blockly.JavaScript.ORDER_NONE) || '"black"';
+      return `ctx.fillStyle = ${color};\nctx.strokeStyle = ${color};\n`;
+    };
+
+    Blockly.Blocks['canvas_set_size'] = {
+      init: function() {
+        this.appendValueInput("SIZE")
+            .setCheck("Number")
+            .appendField("set line width to");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour('#4CAF50');
+        this.setTooltip("Set the line width for drawing");
+      }
+    };
+
+    Blockly.JavaScript.forBlock['canvas_set_size'] = function(block) {
+      var size = Blockly.JavaScript.valueToCode(block, 'SIZE', Blockly.JavaScript.ORDER_NONE) || '1';
+      return `ctx.lineWidth = ${size};\n`;
+    };
+
+    Blockly.Blocks['canvas_draw_rect'] = {
+      init: function() {
+        this.appendValueInput("X")
+            .setCheck("Number")
+            .appendField("draw rectangle at x");
+        this.appendValueInput("Y")
+            .setCheck("Number")
+            .appendField("y");
+        this.appendValueInput("WIDTH")
+            .setCheck("Number")
+            .appendField("width");
+        this.appendValueInput("HEIGHT")
+            .setCheck("Number")
+            .appendField("height");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour('#4CAF50');
+        this.setTooltip("Draw a rectangle outline");
+      }
+    };
+
+    Blockly.JavaScript.forBlock['canvas_draw_rect'] = function(block) {
+      var x = Blockly.JavaScript.valueToCode(block, 'X', Blockly.JavaScript.ORDER_NONE) || '0';
+      var y = Blockly.JavaScript.valueToCode(block, 'Y', Blockly.JavaScript.ORDER_NONE) || '0';
+      var width = Blockly.JavaScript.valueToCode(block, 'WIDTH', Blockly.JavaScript.ORDER_NONE) || '50';
+      var height = Blockly.JavaScript.valueToCode(block, 'HEIGHT', Blockly.JavaScript.ORDER_NONE) || '50';
+      return `ctx.strokeRect(${x}, ${y}, ${width}, ${height});\n`;
+    };
+
+    Blockly.Blocks['canvas_fill_rect'] = {
+      init: function() {
+        this.appendValueInput("X")
+            .setCheck("Number")
+            .appendField("fill rectangle at x");
+        this.appendValueInput("Y")
+            .setCheck("Number")
+            .appendField("y");
+        this.appendValueInput("WIDTH")
+            .setCheck("Number")
+            .appendField("width");
+        this.appendValueInput("HEIGHT")
+            .setCheck("Number")
+            .appendField("height");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour('#4CAF50');
+        this.setTooltip("Fill a rectangle with current color");
+      }
+    };
+
+    Blockly.JavaScript.forBlock['canvas_fill_rect'] = function(block) {
+      var x = Blockly.JavaScript.valueToCode(block, 'X', Blockly.JavaScript.ORDER_NONE) || '0';
+      var y = Blockly.JavaScript.valueToCode(block, 'Y', Blockly.JavaScript.ORDER_NONE) || '0';
+      var width = Blockly.JavaScript.valueToCode(block, 'WIDTH', Blockly.JavaScript.ORDER_NONE) || '50';
+      var height = Blockly.JavaScript.valueToCode(block, 'HEIGHT', Blockly.JavaScript.ORDER_NONE) || '50';
+      return `ctx.fillRect(${x}, ${y}, ${width}, ${height});\n`;
+    };
+
+    Blockly.Blocks['canvas_draw_circle'] = {
+      init: function() {
+        this.appendValueInput("X")
+            .setCheck("Number")
+            .appendField("draw circle at x");
+        this.appendValueInput("Y")
+            .setCheck("Number")
+            .appendField("y");
+        this.appendValueInput("RADIUS")
+            .setCheck("Number")
+            .appendField("radius");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour('#4CAF50');
+        this.setTooltip("Draw a circle outline");
+      }
+    };
+
+    Blockly.JavaScript.forBlock['canvas_draw_circle'] = function(block) {
+      var x = Blockly.JavaScript.valueToCode(block, 'X', Blockly.JavaScript.ORDER_NONE) || '50';
+      var y = Blockly.JavaScript.valueToCode(block, 'Y', Blockly.JavaScript.ORDER_NONE) || '50';
+      var radius = Blockly.JavaScript.valueToCode(block, 'RADIUS', Blockly.JavaScript.ORDER_NONE) || '25';
+      return `ctx.beginPath();\nctx.arc(${x}, ${y}, ${radius}, 0, 2 * Math.PI);\nctx.stroke();\n`;
+    };
+
+    Blockly.Blocks['canvas_fill_circle'] = {
+      init: function() {
+        this.appendValueInput("X")
+            .setCheck("Number")
+            .appendField("fill circle at x");
+        this.appendValueInput("Y")
+            .setCheck("Number")
+            .appendField("y");
+        this.appendValueInput("RADIUS")
+            .setCheck("Number")
+            .appendField("radius");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour('#4CAF50');
+        this.setTooltip("Fill a circle with current color");
+      }
+    };
+
+    Blockly.JavaScript.forBlock['canvas_fill_circle'] = function(block) {
+      var x = Blockly.JavaScript.valueToCode(block, 'X', Blockly.JavaScript.ORDER_NONE) || '50';
+      var y = Blockly.JavaScript.valueToCode(block, 'Y', Blockly.JavaScript.ORDER_NONE) || '50';
+      var radius = Blockly.JavaScript.valueToCode(block, 'RADIUS', Blockly.JavaScript.ORDER_NONE) || '25';
+      return `ctx.beginPath();\nctx.arc(${x}, ${y}, ${radius}, 0, 2 * Math.PI);\nctx.fill();\n`;
+    };
+
+    Blockly.Blocks['canvas_draw_line'] = {
+      init: function() {
+        this.appendValueInput("X1")
+            .setCheck("Number")
+            .appendField("draw line from x");
+        this.appendValueInput("Y1")
+            .setCheck("Number")
+            .appendField("y");
+        this.appendValueInput("X2")
+            .setCheck("Number")
+            .appendField("to x");
+        this.appendValueInput("Y2")
+            .setCheck("Number")
+            .appendField("y");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour('#4CAF50');
+        this.setTooltip("Draw a line between two points");
+      }
+    };
+
+    Blockly.JavaScript.forBlock['canvas_draw_line'] = function(block) {
+      var x1 = Blockly.JavaScript.valueToCode(block, 'X1', Blockly.JavaScript.ORDER_NONE) || '0';
+      var y1 = Blockly.JavaScript.valueToCode(block, 'Y1', Blockly.JavaScript.ORDER_NONE) || '0';
+      var x2 = Blockly.JavaScript.valueToCode(block, 'X2', Blockly.JavaScript.ORDER_NONE) || '100';
+      var y2 = Blockly.JavaScript.valueToCode(block, 'Y2', Blockly.JavaScript.ORDER_NONE) || '100';
+      return `ctx.beginPath();\nctx.moveTo(${x1}, ${y1});\nctx.lineTo(${x2}, ${y2});\nctx.stroke();\n`;
+    };
+
+    Blockly.Blocks['canvas_draw_text'] = {
+      init: function() {
+        this.appendValueInput("TEXT")
+            .setCheck("String")
+            .appendField("draw text");
+        this.appendValueInput("X")
+            .setCheck("Number")
+            .appendField("at x");
+        this.appendValueInput("Y")
+            .setCheck("Number")
+            .appendField("y");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour('#4CAF50');
+        this.setTooltip("Draw text at specified position");
+      }
+    };
+
+    Blockly.JavaScript.forBlock['canvas_draw_text'] = function(block) {
+      var text = Blockly.JavaScript.valueToCode(block, 'TEXT', Blockly.JavaScript.ORDER_NONE) || '"Hello"';
+      var x = Blockly.JavaScript.valueToCode(block, 'X', Blockly.JavaScript.ORDER_NONE) || '10';
+      var y = Blockly.JavaScript.valueToCode(block, 'Y', Blockly.JavaScript.ORDER_NONE) || '20';
+      return `ctx.fillText(${text}, ${x}, ${y});\n`;
+    };
+
+    Blockly.Blocks['canvas_move_to'] = {
+      init: function() {
+        this.appendValueInput("X")
+            .setCheck("Number")
+            .appendField("move to x");
+        this.appendValueInput("Y")
+            .setCheck("Number")
+            .appendField("y");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour('#4CAF50');
+        this.setTooltip("Move drawing cursor to position without drawing");
+      }
+    };
+
+    Blockly.JavaScript.forBlock['canvas_move_to'] = function(block) {
+      var x = Blockly.JavaScript.valueToCode(block, 'X', Blockly.JavaScript.ORDER_NONE) || '0';
+      var y = Blockly.JavaScript.valueToCode(block, 'Y', Blockly.JavaScript.ORDER_NONE) || '0';
+      return `ctx.moveTo(${x}, ${y});\n`;
+    };
+
+    Blockly.Blocks['canvas_line_to'] = {
+      init: function() {
+        this.appendValueInput("X")
+            .setCheck("Number")
+            .appendField("line to x");
+        this.appendValueInput("Y")
+            .setCheck("Number")
+            .appendField("y");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour('#4CAF50');
+        this.setTooltip("Draw line from current position to new position");
+      }
+    };
+
+    Blockly.JavaScript.forBlock['canvas_line_to'] = function(block) {
+      var x = Blockly.JavaScript.valueToCode(block, 'X', Blockly.JavaScript.ORDER_NONE) || '100';
+      var y = Blockly.JavaScript.valueToCode(block, 'Y', Blockly.JavaScript.ORDER_NONE) || '100';
+      return `ctx.lineTo(${x}, ${y});\n`;
+    };
+
+    Blockly.Blocks['canvas_begin_path'] = {
+      init: function() {
+        this.appendDummyInput()
+            .appendField("begin path");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour('#4CAF50');
+        this.setTooltip("Start a new drawing path");
+      }
+    };
+
+    Blockly.JavaScript.forBlock['canvas_begin_path'] = function(block) {
+      return 'ctx.beginPath();\n';
+    };
+
+    Blockly.Blocks['canvas_stroke'] = {
+      init: function() {
+        this.appendDummyInput()
+            .appendField("stroke path");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour('#4CAF50');
+        this.setTooltip("Draw outline of current path");
+      }
+    };
+
+    Blockly.JavaScript.forBlock['canvas_stroke'] = function(block) {
+      return 'ctx.stroke();\n';
+    };
+
+    Blockly.Blocks['canvas_fill'] = {
+      init: function() {
+        this.appendDummyInput()
+            .appendField("fill path");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour('#4CAF50');
+        this.setTooltip("Fill current path with color");
+      }
+    };
+
+    Blockly.JavaScript.forBlock['canvas_fill'] = function(block) {
+      return 'ctx.fill();\n';
+    };
+
+    // Initialize workspace AFTER all blocks are defined
+    injectWorkspace(currentTheme);
+
+    // Enhanced toolbar functionality
+    document.getElementById('settingsToggle').onclick = () => {
+      const panel = document.getElementById('settingsPanel');
+      panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    };
+
+    document.getElementById('darkModeToggle').onclick = () => {
+      document.body.classList.toggle('dark');
+      setTimeout(() => workspace.resize(), 300);
+      ErrorHandler.showSuccess('Theme changed successfully');
+    };
+
+    document.getElementById('debugToggle').onclick = () => {
+      window.debugMode = !window.debugMode;
+      const button = document.getElementById('debugToggle');
+      button.textContent = window.debugMode ? '🐛 Debug: ON' : '🐛 Toggle Debug Mode';
+      ErrorHandler.showSuccess(`Debug mode ${window.debugMode ? 'enabled' : 'disabled'}`);
+    };
+
+    // Enhanced save functionality with error handling
     function saveWorkspace() {
-      const xml = Blockly.Xml.workspaceToDom(workspace);
-      const xmlText = Blockly.utils.xml.domToText(xml);
-      const blob = new Blob([xmlText], { type: 'text/xml' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = "workspace.xml";
-      a.click();
+      try {
+        const xml = Blockly.Xml.workspaceToDom(workspace);
+        const xmlText = Blockly.Xml.domToPrettyText(xml);
+        const blob = new Blob([xmlText], {type: "text/xml"});
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "workspace.xml";
+        a.click();
+        URL.revokeObjectURL(a.href);
+        ErrorHandler.showSuccess('Workspace saved successfully');
+      } catch (error) {
+        ErrorHandler.showError('Save Error', error.message);
+      }
     }
 
-    document.getElementById('loadFile').addEventListener('change', function (e) {
-      const file = e.target.files[0];
+    // Enhanced load functionality with error handling
+    document.getElementById('loadFile').addEventListener('change', (event) => {
+      const file = event.target.files[0];
       if (!file) return;
+      
       const reader = new FileReader();
-      reader.onload = function (e) {
+      reader.onload = (e) => {
+        const xmlText = e.target.result;
         try {
-          const xml = Blockly.utils.xml.textToDom(e.target.result);
-          Blockly.Xml.clearWorkspaceAndLoadFromXml(xml, workspace);
-        } catch (err) {
-          alert("❌ Load failed: " + err.message);
+          const xml = Blockly.Xml.textToDom(xmlText);
+          workspace.clear();
+          Blockly.Xml.domToWorkspace(xml, workspace);
+          ErrorHandler.showSuccess('Workspace loaded successfully');
+        } catch (error) {
+          ErrorHandler.showError('Load Error', 'Invalid XML file format');
         }
       };
+      
+      reader.onerror = () => {
+        ErrorHandler.showError('File Read Error', 'Could not read the selected file');
+      };
+      
       reader.readAsText(file);
     });
+
+    // Enhanced run functionality with better error handling
+    function runCode() {
+      const code = Blockly.JavaScript.workspaceToCode(workspace);
+      
+      if (!code.trim()) {
+        ErrorHandler.showError('No Code', 'Please create some blocks first');
+        return;
+      }
+      
+      // Validate code before running
+      const issues = ErrorHandler.validateCode(code);
+      if (issues.length > 0) {
+        ErrorHandler.showError('Code Issues Found', issues.join('; '));
+        return;
+      }
+      
+      try {
+        ErrorHandler.showDebug('Executing code...');
+        // Make canvas context available globally for generated code
+        window.canvas = canvas;
+        window.ctx = ctx;
+        // eslint-disable-next-line no-eval
+        eval(code);
+        ErrorHandler.showSuccess('Code executed successfully');
+      } catch (error) {
+        ErrorHandler.showError('Execution Error', `${error.name}: ${error.message}`);
+        console.error('Detailed error:', error);
+      }
+    }
+
+    // Code validation function
+    function validateCode() {
+      const code = Blockly.JavaScript.workspaceToCode(workspace);
+      const issues = ErrorHandler.validateCode(code);
+      
+      if (issues.length === 0) {
+        ErrorHandler.showSuccess('Code validation passed - no issues found');
+      } else {
+        ErrorHandler.showError('Validation Issues', issues.join('<br>• '));
+      }
+    }
+
+    // Enhanced copy functionality
+    function copyCode() {
+      const code = document.getElementById('codeArea').textContent;
+      
+      if (!code.trim()) {
+        ErrorHandler.showError('Nothing to Copy', 'No code has been generated yet');
+        return;
+      }
+      
+      navigator.clipboard.writeText(code).then(() => {
+        ErrorHandler.showSuccess('Code copied to clipboard');
+      }, (error) => {
+        ErrorHandler.showError('Copy Failed', 'Could not access clipboard');
+        console.error('Copy error:', error);
+      });
+    }
+
+    // Click outside to close settings panel
+    document.addEventListener('click', (event) => {
+      const settingsPanel = document.getElementById('settingsPanel');
+      const settingsToggle = document.getElementById('settingsToggle');
+      
+      if (!settingsPanel.contains(event.target) && !settingsToggle.contains(event.target)) {
+        settingsPanel.style.display = 'none';
+      }
+    });
+
+    // Enhanced resize handling
+    window.addEventListener('resize', () => {
+      if (workspace) {
+        setTimeout(() => workspace.resize(), 100);
+      }
+    }};
   </script>
 </body>
 </html>
